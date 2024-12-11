@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memory Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f2f2f2;
+            transition: background-color 2s ease;
+        }
+
+        body.winning {
+            animation: background-fluent 3s infinite alternate;
+        }
+
+        @keyframes background-fluent {
+            0% { background-color: #ff6347; }
+            50% { background-color: #ff4500; }
+            100% { background-color: #ffa500; }
+        }
+
+        .game-container {
+            text-align: center;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            color: #ff6347;
+        }
+
+        .game-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 100px);
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .card {
+            width: 100px;
+            height: 100px;
+            background-color: #1e90ff;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: transform 0.5s, background-color 0.5s;
+            background-image: url('backside.jpg');
+            background-size: cover;
+        }
+
+        .card.flipped {
+            background-color: #ff6347;
+            background-image: none;
+            transform: rotateY(0deg);
+        }
+
+        .card.winning-blast {
+            animation: blast 1s ease-out;
+        }
+
+        @keyframes blast {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.5); }
+            100% { transform: scale(1); }
+        }
+
+        .card img {
+            display: none;
+            max-width: 100%;
+            max-height: 100%;
+        }
+
+        .card.flipped img {
+            display: block;
+        }
+
+        #restart-btn {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+
+        #restart-btn:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>Memory Game</h1>
+        <div class="game-grid" id="game-grid"></div>
+        <button id="restart-btn">Restart Game</button>
+    </div>
+    <script>
+        const cardsArray = [
+            { name: 'A', img: 'https://th.bing.com/th/id/OIP.YcBZu9kj2Zakt5Dix022bQHaHa?w=512&h=512&rs=1&pid=ImgDetMain' },  
+            { name: 'B', img: 'https://th.bing.com/th/id/OIP.ERj85jEqZCtTPdGW3LBQCwAAAA?w=256&h=256&rs=1&pid=ImgDetMain' },
+            { name: 'C', img: 'https://th.bing.com/th/id/OIP.1WpqTU3M1fnom6QhSdPiBQAAAA?w=474&h=474&rs=1&pid=ImgDetMain' },
+            { name: 'D', img: 'https://th.bing.com/th/id/OIP.3MCXyzG01HECJUz29xxZjQHaHa?w=640&h=640&rs=1&pid=ImgDetMain' },
+            { name: 'E', img: 'https://th.bing.com/th/id/OIP.Z8Q2GhsS5WsfnVQMPdy-6wHaHa?w=768&h=768&rs=1&pid=ImgDetMain' },
+            { name: 'F', img: 'https://th.bing.com/th/id/OIP.dr8c4nF8_JvzOCv_Pz2ojQHaHN?w=3072&h=2993&rs=1&pid=ImgDetMain' },
+            { name: 'G', img: 'https://th.bing.com/th/id/OIP.Wo-4gkSU73xqDLqY1tDGPQAAAA?rs=1&pid=ImgDetMain' },
+            { name: 'H', img: 'https://th.bing.com/th/id/OIP.iYSay9FJTCH4vV8X5sf1IwAAAA?w=256&h=256&rs=1&pid=ImgDetMain' }
+        ];
+
+        let grid = document.getElementById('game-grid');
+        let cards = [];
+        let flippedCards = [];
+        let matchedPairs = 0;
+
+        function shuffleDeck() {
+            let deck = [...cardsArray, ...cardsArray];
+            deck.sort(() => 0.5 - Math.random());
+            return deck;
+        }
+
+        function createCards() {
+            let shuffledDeck = shuffleDeck();
+            shuffledDeck.forEach(cardData => {
+                let card = document.createElement('div');
+                card.classList.add('card');
+                card.dataset.name = cardData.name;
+                let img = document.createElement('img');
+                img.src = cardData.img;
+                card.appendChild(img);
+                card.addEventListener('click', flipCard);
+                grid.appendChild(card);
+                cards.push(card);
+            });
+        }
+
+        function flipCard() {
+            if (this.classList.contains('flipped') || flippedCards.length === 2) return;
+            this.classList.add('flipped');
+            flippedCards.push(this);
+            if (flippedCards.length === 2) checkForMatch();
+        }
+
+        function checkForMatch() {
+            let [firstCard, secondCard] = flippedCards;
+            if (firstCard.dataset.name === secondCard.dataset.name) {
+                matchedPairs++;
+                flippedCards = [];
+                if (matchedPairs === cardsArray.length) {
+                    setTimeout(() => {
+                        document.body.classList.add('winning');
+                        cards.forEach(card => card.classList.add('winning-blast'));
+                        setTimeout(() => alert('You won!'), 1000);
+                    }, 500);
+                }
+            } else {
+                setTimeout(() => {
+                    firstCard.classList.remove('flipped');
+                    secondCard.classList.remove('flipped');
+                    flippedCards = [];
+                }, 1000);
+            }
+        }
+
+        function restartGame() {
+            grid.innerHTML = '';
+            cards = [];
+            flippedCards = [];
+            matchedPairs = 0;
+            document.body.classList.remove('winning');
+            createCards();
+        }
+
+        document.getElementById('restart-btn').addEventListener('click', restartGame);
+        createCards();
+    </script>
+</body>
+</html>
